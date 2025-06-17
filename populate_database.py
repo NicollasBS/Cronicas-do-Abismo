@@ -52,11 +52,13 @@ def insert_pocao(conn, pocao_data):
     conn.commit()
 
 def insert_magia(conn, magia_data):
-    """ Insere uma magia. """
-    sql = ''' INSERT INTO Magia(nome, nivel_magia, escola_magia, tempo_conjuracao, alcance_magia, componentes, duracao_magia, descricao_efeito, requer_concentracao)
+    """ Insere uma magia, ignorando se ela já existir. """
+    # A mudança está aqui: "INSERT OR IGNORE" em vez de apenas "INSERT"
+    sql = ''' INSERT OR IGNORE INTO Magia(nome, nivel_magia, escola_magia, tempo_conjuracao, alcance_magia, componentes, duracao_magia, descricao_efeito, requer_concentracao)
               VALUES(?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     magia_data_processed = list(magia_data)
+    # Converte a lista de componentes para uma string JSON
     magia_data_processed[5] = json.dumps(magia_data_processed[5])
     cur.execute(sql, tuple(magia_data_processed))
     conn.commit()
@@ -135,22 +137,11 @@ def main():
         insert_pocao(conn, (pocao_cura_id, "Cura 2d4+2 PV", "Instantâneo", 7)) # Usando média de 2d4+2
 
         # --- Inserir Magias --- #
-        # bola_fogo_id = insert_magia(conn, ("Bola de Fogo", 3, "Evocação", "1 ação", "45 metros", ["V", "S", "M"], "Instantâneo", "Explosão de fogo em área.", False))
-        # curar_ferimentos_id = insert_magia(conn, ("Curar Ferimentos", 1, "Evocação", "1 ação", "Toque", ["V", "S"], "Instantâneo", "Restaura 1d8+mod PV.", False))
-        # misseis_magicos_id = insert_magia(conn, ("Mísseis Mágicos", 1, "Evocação", "1 ação", "36 metros", ["V", "S"], "Instantâneo", "Três dardos causam 1d4+1 dano cada.", False))
+        bola_fogo_id = insert_magia(conn, ("Bola de Fogo", 3, "Evocação", "1 ação", "45 metros", ["V", "S", "M"], "Instantâneo", "Explosão de fogo em área.", False))
+        curar_ferimentos_id = insert_magia(conn, ("Curar Ferimentos", 1, "Evocação", "1 ação", "Toque", ["V", "S"], "Instantâneo", "Restaura 1d8+mod PV.", False))
+        misseis_magicos_id = insert_magia(conn, ("Mísseis Mágicos", 1, "Evocação", "1 ação", "36 metros", ["V", "S"], "Instantâneo", "Três dardos causam 1d4+1 dano cada.", False))
 
         # --- Inserir Personagens --- #
-        # Jogador: Guerreiro Anão
-        guerreiro_attrs = {"Força": 16, "Destreza": 10, "Constituição": 14, "Inteligência": 8, "Sabedoria": 12, "Carisma": 9}
-        guerreiro_profs = ["Armaduras Pesadas", "Escudos", "Machados", "Atletismo"]
-        guerreiro_id = insert_personagem(conn, ("Durin", "Anão da Montanha", "Guerreiro", 1, 12, 12, guerreiro_attrs, guerreiro_profs, "Jogador"))
-        insert_jogador(conn, (guerreiro_id, 0, "Leal e Bom", "Jogador1"))
-
-        # Jogador: Mago Elfo
-        mago_attrs = {"Força": 8, "Destreza": 14, "Constituição": 12, "Inteligência": 16, "Sabedoria": 10, "Carisma": 11}
-        mago_profs = ["Arcanismo", "História", "Adagas", "Bordões"]
-        mago_id = insert_personagem(conn, ("Elara", "Alta Elfa", "Mago", 1, 8, 8, mago_attrs, mago_profs, "Jogador"))
-        insert_jogador(conn, (mago_id, 0, "Neutro e Bom", "Jogador2"))
 
         # NPC: Goblin
         goblin_attrs = {"Força": 8, "Destreza": 14, "Constituição": 10, "Inteligência": 10, "Sabedoria": 8, "Carisma": 8}
@@ -182,11 +173,11 @@ def main():
 
         # Magias Iniciais (Exemplo: Mago conhece algumas)
         # Supondo que MagiasPersonagem relaciona magias conhecidas
-        # sql_create_magias_personagem_table = """ CREATE TABLE IF NOT EXISTS MagiasPersonagem (
-        #                                             personagem_id INTEGER NOT NULL,
-        #                                             magia_id INTEGER NOT NULL,
-        #                                             status TEXT CHECK(status IN (
-        #                                         ); """
+        sql_create_magias_personagem_table = """ CREATE TABLE IF NOT EXISTS MagiasPersonagem (
+                                                    personagem_id INTEGER NOT NULL,
+                                                    magia_id INTEGER NOT NULL,
+                                                    status TEXT CHECK(status IN (
+                                                ); """
         # Não implementado aqui para simplificar, mas a tabela existe.
 
         print("Banco de dados populado com sucesso!")

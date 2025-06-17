@@ -1,7 +1,7 @@
 {
-    "save_id": 1750173906,
+    "save_id": 1750179272,
     "id_entidade": 1,
-    "nome": "haha",
+    "nome": "asd",
     "raca": "Alta Elfa",
     "classe_personagem": "Mago",
     "nivel": 1,
@@ -23,5 +23,6 @@
     ],
     "experiencia": 0,
     "alinhamento": "Neutro",
-    "nome_jogador": "Jogador"
+    "nome_jogador": "Jogador",
+    "equipped_weapon_id": 1
 }
