@@ -1,0 +1,27 @@
+{
+    "save_id": 1750173906,
+    "id_entidade": 1,
+    "nome": "haha",
+    "raca": "Alta Elfa",
+    "classe_personagem": "Mago",
+    "nivel": 1,
+    "pontos_vida_maximos": 8,
+    "pontos_vida_atuais": 8,
+    "atributos": {
+        "Força": 8,
+        "Destreza": 14,
+        "Constituição": 12,
+        "Inteligência": 16,
+        "Sabedoria": 10,
+        "Carisma": 11
+    },
+    "proficiencias": [
+        "Arcanismo",
+        "História",
+        "Adagas",
+        "Bordões"
+    ],
+    "experiencia": 0,
+    "alinhamento": "Neutro",
+    "nome_jogador": "Jogador"
+}

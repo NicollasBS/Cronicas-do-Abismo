@@ -219,11 +219,12 @@ class Jogador(Personagem):
     """Representa os personagens controlados pelos usuários."""
     def __init__(self, id_entidade: int, nome: str, raca: str, classe_personagem: str, nivel: int,
                  pontos_vida_maximos: int, atributos: Dict[str, int], proficiencias: List[str],
-                 experiencia: int, alinhamento: str, nome_jogador: str):
+                 experiencia: int, alinhamento: str, nome_jogador: str, save_id: int | None = None): # Adicionado save_id
         super().__init__(id_entidade, nome, raca, classe_personagem, nivel, pontos_vida_maximos, atributos, proficiencias)
         self.experiencia = experiencia
         self.alinhamento = alinhamento
         self.nome_jogador = nome_jogador
+        self.save_id = save_id
 
     def ganhar_experiencia(self, quantidade: int):
         """Adiciona pontos de experiência ao jogador."""

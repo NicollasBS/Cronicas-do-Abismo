@@ -1,0 +1,27 @@
+{
+    "save_id": 1750173934,
+    "id_entidade": 1,
+    "nome": "dfghjk",
+    "raca": "Anão da Montanha",
+    "classe_personagem": "Guerreiro",
+    "nivel": 1,
+    "pontos_vida_maximos": 12,
+    "pontos_vida_atuais": 12,
+    "atributos": {
+        "Força": 16,
+        "Destreza": 10,
+        "Constituição": 14,
+        "Inteligência": 8,
+        "Sabedoria": 12,
+        "Carisma": 9
+    },
+    "proficiencias": [
+        "Armaduras Pesadas",
+        "Escudos",
+        "Machados",
+        "Atletismo"
+    ],
+    "experiencia": 0,
+    "alinhamento": "Neutro",
+    "nome_jogador": "Jogador"
+}
