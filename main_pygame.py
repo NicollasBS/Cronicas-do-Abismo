@@ -1,45 +1,61 @@
+# main_pygame.py
+
 import pygame
 import sys
-# Linha Corrigida
-from rpg_model import Jogador, NPC, Arma
+from rpg_model import Jogador, NPC, Arma  # Importando suas classes!
+
+# --- CONSTANTES DE CONFIGURAÇÃO ---
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 60
-PLAYER_SPEED = 5
+PLAYER_SPEED = 2
 
-# CORES
+# Cores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+GREEN = (0, 150, 0)
 
-# inicializa o Pygame
+# --- INICIALIZAÇÃO DO PYGAME ---
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("RPG Game")
+pygame.display.set_caption("Meu RPG de D&D")
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 36)
+font = pygame.font.Font(None, 36) # Fonte para texto da UI
 
-# Classe Sprite do Jogador
+# --- CLASSES DE SPRITE (A Camada Visual) ---
+
 class PlayerSprite(pygame.sprite.Sprite):
+    """
+    Esta classe representa a parte VISUAL do jogador.
+    Ela contém a lógica de movimento e imagem, e se conecta
+    ao objeto Jogador que contém os dados e regras do jogo.
+    """
     def __init__(self, personagem_jogador: Jogador, pos_x, pos_y):
         super().__init__()
-        self.jogador = personagem_jogador
-        self.image = pygame.Surface((50, 50))
+        
+        # Link para o objeto de dados do jogador
+        self.personagem_data = personagem_jogador
+        
+        # Atributos visuais (um quadrado verde por enquanto)
+        self.image = pygame.Surface((40, 40))
         self.image.fill(GREEN)
         self.rect = self.image.get_rect(center=(pos_x, pos_y))
 
     def update(self):
+        """Atualiza a posição do sprite com base nas teclas pressionadas."""
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
+        
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.rect.x -= PLAYER_SPEED
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.rect.x += PLAYER_SPEED
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.rect.y -= PLAYER_SPEED
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.rect.y += PLAYER_SPEED
 
+        # Mantém o jogador dentro da tela
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
@@ -48,20 +64,28 @@ class PlayerSprite(pygame.sprite.Sprite):
             self.rect.top = 0
         if self.rect.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
-        
-# Função para desenhar a interface do jogo
+
+# --- FUNÇÃO PARA DESENHAR A INTERFACE (UI/HUD) ---
+
 def draw_hud(surface, jogador_sprite: PlayerSprite):
-   jogador_data = jogador_sprite.jogador_data
+    """Desenha informações do jogador na tela."""
+    # Extrai os dados do objeto Jogador dentro do sprite
+    jogador_data = jogador_sprite.personagem_data
+    
+    # Exibe Nome e Classe
+    nome_texto = font.render(f"{jogador_data.nome} ({jogador_data.classe_personagem} Nv. {jogador_data.nivel})", True, WHITE)
+    surface.blit(nome_texto, (10, 10))
+    
+    # Exibe Pontos de Vida
+    pv_texto = font.render(f"PV: {jogador_data.pontos_vida_atuais} / {jogador_data.pontos_vida_maximos}", True, WHITE)
+    surface.blit(pv_texto, (10, 50))
+    
+    # Barra de Vida
+    pygame.draw.rect(surface, RED, (10, 90, 200, 25))
+    vida_percentual = jogador_data.pontos_vida_atuais / jogador_data.pontos_vida_maximos
+    pygame.draw.rect(surface, GREEN, (10, 90, 200 * vida_percentual, 25))
 
-   nome_texto = font.render(f"Nome: {jogador_data.nome} ({jogador_data.classe_personagem} Nv. {jogador_data.nivel})", True, WHITE)
-   surface.blit(nome_texto, (10, 10))
-
-   pv_texto = font.render(f"PV: {jogador_data.pontos_vida_atuais} / {jogador_data.pontos_vida_maximos}", True, WHITE)
-   surface.blit(pv_texto, (10, 50))
-
-   pygame.draw.rect(surface, RED, (10, 90, 200, 25))
-   vida_percentual = jogador_data.pontos_vida_atuais / jogador_data.pontos_vida_maximos
-   pygame.draw.rect(surface, GREEN, (10, 90, 200 * vida_percentual, 25))
+# --- FUNÇÃO PRINCIPAL DO JOGO ---
 
 def game_loop():
     """Loop principal que executa o jogo."""
@@ -70,7 +94,7 @@ def game_loop():
     # Aqui, criamos um personagem usando sua classe Jogador
     guerreiro_data = Jogador(
         id_entidade=1, nome="Durin", raca="Anão", classe_personagem="Guerreiro", nivel=1,
-        pontos_vida_maximos=12, pontos_vida_atuais=12,
+        pontos_vida_maximos=12,
         atributos={"Força": 16, "Destreza": 10, "Constituição": 14},
         proficiencias=["Escudos", "Machados"], experiencia=0, alinhamento="Leal e Bom", nome_jogador="Jogador1"
     )
@@ -120,5 +144,3 @@ def game_loop():
 # --- PONTO DE ENTRADA DO PROGRAMA ---
 if __name__ == '__main__':
     game_loop()
-   
-
