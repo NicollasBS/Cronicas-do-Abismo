@@ -20,6 +20,8 @@ def get_class_template(class_name: str) -> dict | None:
     finally:
         if conn: conn.close()
 
+# Em db_manager.py, substitua a função antiga por esta versão final
+
 def get_all_armors() -> list[Armadura]:
     conn = None
     try:
@@ -29,14 +31,29 @@ def get_all_armors() -> list[Armadura]:
         sql = "SELECT * FROM Item i JOIN Armadura a ON i.id = a.item_id WHERE i.tipo_item = 'Armadura'"
         cur.execute(sql)
         rows = cur.fetchall()
-        return [Armadura(
-            id_entidade=r["id"], nome=r["nome"], descricao=r["descricao"], peso=r["peso"],
-            valor_moedas=r["valor_moedas"], tipo_armadura=r["tipo_armadura"],
-            bonus_ca_base=r["bonus_ca_base"], requer_destreza_bonus=r["requer_destreza_bonus"],
-            max_bonus_destreza=r["max_bonus_destreza"], penalidade_furtividade=r["penalidade_furtividade"],
-            requisito_forca=r["requisito_forca"], bonus_pv=r.get("bonus_pv", 0)
-        ) for r in rows]
-    except: return []
+        
+        armaduras = []
+        for r in rows:
+            armadura_obj = Armadura(
+                id_entidade=r["id"], nome=r["nome"], descricao=r["descricao"], peso=r["peso"],
+                valor_moedas=r["valor_moedas"], tipo_armadura=r["tipo_armadura"],
+                bonus_ca_base=r["bonus_ca_base"], requer_destreza_bonus=r["requer_destreza_bonus"],
+                max_bonus_destreza=r["max_bonus_destreza"], penalidade_furtividade=r["penalidade_furtividade"],
+                requisito_forca=r["requisito_forca"], 
+                # --- LINHA CORRIGIDA ---
+                bonus_pv=r["bonus_pv"] # Acessando diretamente, sem o .get()
+            )
+            armaduras.append(armadura_obj)
+        return armaduras
+        
+    except Exception as e:
+        # Mantemos o bloco de exceção para capturar outros possíveis erros futuros
+        print("\n" + "="*50)
+        print(f"!!! ERRO CRÍTICO ao carregar armaduras do banco de dados: {e}")
+        import traceback
+        traceback.print_exc()
+        print("="*50 + "\n")
+        return []
     finally:
         if conn: conn.close()
 

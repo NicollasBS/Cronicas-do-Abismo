@@ -16,6 +16,10 @@ PROJECTILE_SPEED = 7
 MELEE_RANGE = 50 
 WHITE, BLACK, RED, GREEN, GRAY, YELLOW, BLUE = (255, 255, 255), (0, 0, 0), (255, 0, 0), (0, 150, 0), (100, 100, 100), (255, 255, 0), (0, 100, 255)
 
+ENEMY_SPEED = 1
+ENEMY_ATTACK_INTERVAL = 3000 # 3000 milissegundos = 3 segundos
+XP_PER_KILL = 50 # Pontos de experiência por derrotar um inimigo
+
 # NOVO: Constantes para a regeneração de mana
 MANA_REGEN_INTERVAL = 10000 # 10000 milissegundos = 10 segundos
 MANA_REGEN_AMOUNT = 5     # Quantidade de mana a regenerar
@@ -108,58 +112,127 @@ def main_menu(screen, clock, fonts):
         pygame.display.flip(); clock.tick(FPS)
 
 def character_creation_screen(screen, clock, fonts):
-    fields = ["Nome do Personagem", "Classe (Guerreiro/Mago)"]; user_inputs = ["", ""]; current_field = 0
+    """
+    Tela de criação de personagem com entrada de nome e SELEÇÃO DE CLASSE POR MENU.
+    """
+    nome_personagem = ""
+    classe_selecionada = ""
+    fase_criacao = "nome"  # Começa na fase de digitar o nome
+    
+    classes_disponiveis = ["Guerreiro", "Mago"]
+    classe_idx_selecionada = 0
+
     while True:
-        screen.fill(BLACK); draw_text(screen, 'Criação de Personagem', fonts["main"], WHITE, SCREEN_WIDTH/2, 20, center=True)
-        for i, field in enumerate(fields):
-            prompt = f"{field}: {user_inputs[i]}" + ("_" if i == current_field else "")
-            draw_text(screen, prompt, fonts["input"], WHITE, 150, 150 + i * 50)
+        screen.fill(BLACK)
+        draw_text(screen, 'Criação de Personagem', fonts["main"], WHITE, SCREEN_WIDTH/2, 20, center=True)
+
+        if fase_criacao == "nome":
+            draw_text(screen, "Digite o nome e pressione ENTER", fonts["list"], YELLOW, SCREEN_WIDTH/2, 100, center=True)
+            prompt_nome = f"Nome: {nome_personagem}_"
+            draw_text(screen, prompt_nome, fonts["input"], WHITE, 150, 150)
+        
+        elif fase_criacao == "classe":
+            draw_text(screen, f"Nome: {nome_personagem}", fonts["input"], WHITE, 150, 150)
+            draw_text(screen, "Escolha sua classe e pressione ENTER", fonts["list"], YELLOW, SCREEN_WIDTH/2, 200, center=True)
+            for i, classe in enumerate(classes_disponiveis):
+                cor = YELLOW if i == classe_idx_selecionada else WHITE
+                draw_text(screen, classe, fonts["main"], cor, SCREEN_WIDTH/2, 250 + i * 50, center=True)
+
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE): pygame.quit(); sys.exit()
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                pygame.quit()
+                sys.exit()
+            
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    if user_inputs[current_field].strip() != "":
-                        current_field += 1
-                        if current_field >= len(fields):
-                            nome_personagem, classe_personagem_input = user_inputs[0], user_inputs[1]
-                            template = get_class_template(classe_personagem_input)
-                            if not template:
-                                print(f"Classe '{classe_personagem_input}' não encontrada."); current_field -= 1; user_inputs[current_field] = ""; continue
-                            novo_jogador = Jogador(
-                                id_entidade=template["id"], nome=nome_personagem, raca=template["raca"],
-                                classe_personagem=template["classe_personagem"], nivel=template["nivel"],
-                                pontos_vida_maximos=template["pontos_vida_maximos"],
-                                pontos_mana_maximos=template["pontos_mana_maximos"],
-                                atributos=json.loads(template["atributos"]), proficiencias=json.loads(template["proficiencias"]),
-                                experiencia=template.get("experiencia", 0), alinhamento=template.get("alinhamento", "Neutro"),
-                                nome_jogador=template.get("nome_jogador", "Jogador")
-                            )
-                            return novo_jogador
-                elif event.key == pygame.K_BACKSPACE: user_inputs[current_field] = user_inputs[current_field][:-1]
-                else: user_inputs[current_field] += event.unicode
-        pygame.display.flip(); clock.tick(FPS)
+                if fase_criacao == "nome":
+                    if event.key == pygame.K_RETURN:
+                        if nome_personagem.strip():
+                            fase_criacao = "classe" # Avança para a seleção de classe
+                    elif event.key == pygame.K_BACKSPACE:
+                        nome_personagem = nome_personagem[:-1]
+                    else:
+                        nome_personagem += event.unicode
+                
+                elif fase_criacao == "classe":
+                    if event.key == pygame.K_UP:
+                        classe_idx_selecionada = (classe_idx_selecionada - 1) % len(classes_disponiveis)
+                    elif event.key == pygame.K_DOWN:
+                        classe_idx_selecionada = (classe_idx_selecionada + 1) % len(classes_disponiveis)
+                    elif event.key == pygame.K_RETURN:
+                        classe_selecionada = classes_disponiveis[classe_idx_selecionada]
+                        
+                        # Lógica para criar o jogador com a classe selecionada
+                        template = get_class_template(classe_selecionada)
+                        if not template:
+                            # Essa mensagem não deve aparecer com o menu, mas é uma boa prática manter
+                            print(f"ERRO: Template para a classe '{classe_selecionada}' não encontrado no DB.")
+                            continue
+
+                        novo_jogador = Jogador(
+                            id_entidade=template["id"], nome=nome_personagem, raca=template["raca"],
+                            classe_personagem=template["classe_personagem"], nivel=template["nivel"],
+                            pontos_vida_maximos=template["pontos_vida_maximos"],
+                            pontos_mana_maximos=template["pontos_mana_maximos"],
+                            atributos=json.loads(template["atributos"]), proficiencias=json.loads(template["proficiencias"]),
+                            experiencia=template.get("experiencia", 0), alinhamento=template.get("alinhamento", "Neutro"),
+                            nome_jogador=template.get("nome_jogador", "Jogador")
+                        )
+                        return novo_jogador # Retorna o personagem criado e finaliza a função
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+# Em main_pygame.py, substitua a função antiga por esta versão atualizada
 
 def selection_screen(screen, clock, fonts, player_data, title, items, item_type):
-    if not items: return player_data
+    if not items:
+        # Adiciona uma mensagem para o jogador saber por que a tela foi pulada
+        print(f"AVISO: Nenhum item do tipo '{item_type}' encontrado no banco de dados. Pulando tela de seleção.")
+        return player_data
+        
     selected_index = 0
     while True:
-        screen.fill(BLACK); draw_text(screen, title, fonts["menu"], WHITE, SCREEN_WIDTH / 2, 50, center=True)
+        screen.fill(BLACK)
+        draw_text(screen, title, fonts["menu"], WHITE, SCREEN_WIDTH / 2, 50, center=True)
+        
         for i, item in enumerate(items):
             color = YELLOW if i == selected_index else WHITE
-            info_text = f"{item.nome} (CA: {item.bonus_ca_base}, PV: +{item.bonus_pv})" if item_type == "armor" else item.nome
+            
+            # --- LÓGICA DE EXIBIÇÃO MELHORADA ---
+            info_text = ""
+            if item_type == "armor":
+                info_text = f"{item.nome} (CA: {item.bonus_ca_base}, PV: +{item.bonus_pv})"
+            elif item_type == "spell":
+                # Mostra o nome, custo de mana e nível da magia
+                info_text = f"{item.nome} (Custo: {item.custo_mana} PM, Nível: {item.nivel_magia})"
+            else:
+                # Para armas e outros itens, mostra apenas o nome
+                info_text = item.nome
+            # ------------------------------------
+
             draw_text(screen, info_text, fonts["list"], color, 100, 150 + i * 40)
+            
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: return player_data
-                if event.key == pygame.K_UP: selected_index = (selected_index - 1) % len(items)
-                elif event.key == pygame.K_DOWN: selected_index = (selected_index + 1) % len(items)
+                if event.key == pygame.K_ESCAPE:
+                    return player_data # Permite sair da tela de seleção sem escolher
+                if event.key == pygame.K_UP:
+                    selected_index = (selected_index - 1) % len(items)
+                elif event.key == pygame.K_DOWN:
+                    selected_index = (selected_index + 1) % len(items)
                 elif event.key == pygame.K_RETURN:
                     chosen_item = items[selected_index]
-                    if item_type in ["weapon", "armor"]: player_data.usar_item(chosen_item)
-                    elif item_type == "spell": player_data.aprender_magia(chosen_item)
+                    if item_type in ["weapon", "armor"]:
+                        player_data.usar_item(chosen_item)
+                    elif item_type == "spell":
+                        player_data.aprender_magia(chosen_item)
                     return player_data
-        pygame.display.flip(); clock.tick(FPS)
+                    
+        pygame.display.flip()
+        clock.tick(FPS)
 
 # --- LOOP PRINCIPAL DO JOGO (COM A LÓGICA DE REGENERAÇÃO) ---
 def game_loop(screen, clock, fonts, jogador_data: Jogador):
@@ -265,6 +338,12 @@ def main():
             player_data = character_creation_screen(screen, clock, fonts)
             if player_data:
                 player_data = selection_screen(screen, clock, fonts, player_data, "Escolha sua Arma Inicial", get_all_weapons(), "weapon")
+                
+                print(f"--- DEBUG INFO ---")
+                print(f"Classe do personagem para verificação: '{player_data.classe_personagem}'")
+                print(f"A condição (classe == 'guerreiro') é: {player_data.classe_personagem.lower() == 'guerreiro'}")
+                print(f"--------------------")
+
                 if player_data.classe_personagem.lower() == 'guerreiro':
                     player_data = selection_screen(screen, clock, fonts, player_data, "Escolha sua Armadura", get_all_armors(), "armor")
                 elif player_data.classe_personagem.lower() == 'mago':
