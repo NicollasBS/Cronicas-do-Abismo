@@ -1,0 +1,98 @@
+@startuml RPG_DnD_Classes
+
+abstract class Entidade {
+  + id: int
+  + nome: str
+}
+
+abstract class Personagem extends Entidade {
+  + raca: str
+  + classe_personagem: str
+  + nivel: int
+  + pontos_vida_maximos: int
+  + pontos_vida_atuais: int
+  + atributos: dict
+  + inventario: list<Item>
+  + classe_armadura: int
+  + proficiencias: list<str>
+  + equipamento: dict
+  --
+  + atacar(alvo: Personagem)
+  + receber_dano(quantidade: int)
+  + usar_item(item: Item)
+  + morrer()
+}
+
+class Jogador extends Personagem {
+  + experiencia: int
+  + alinhamento: str
+  + nome_jogador: str
+  --
+  + ganhar_experiencia(quantidade: int)
+  + subir_nivel()
+  + escolher_acao()
+}
+
+class NPC extends Personagem {
+  + tipo: str
+  + comportamento: str
+  + dialogo: str/dict
+  --
+  + interagir(jogador: Jogador)
+  + determinar_acao_combate()
+}
+
+abstract class Item extends Entidade {
+  + descricao: str
+  + peso: float
+  + valor_moedas: int
+  --
+  + ser_usado(usuario: Personagem)
+}
+
+class Arma extends Item {
+  + tipo_dano: str
+  + dado_dano: str
+  + propriedades: list<str>
+  + alcance: str
+  --
+  + calcular_dano_rolagem()
+}
+
+class Armadura extends Item {
+  + tipo_armadura: str
+  + bonus_ca_base: int
+  + requer_destreza_bonus: bool
+  + max_bonus_destreza: int/None
+  + penalidade_furtividade: bool
+  + requisito_forca: int
+}
+
+class Pocao extends Item {
+  + efeito: str
+  + duracao_efeito: str
+  + quantidade_cura: int/None
+  --
+  + aplicar_efeito(alvo: Personagem)
+}
+
+class Magia extends Entidade {
+  + nivel_magia: int
+  + escola_magia: str
+  + tempo_conjuracao: str
+  + alcance_magia: str
+  + componentes: list<str>
+  + duracao_magia: str
+  + descricao_efeito: str
+  + requer_concentracao: bool
+  --
+  + conjurar(conjurador: Personagem, alvo: Personagem/None)
+}
+
+' Relationships
+Personagem "1" *-- "0..*" Item : inventario >
+Personagem "1" *-- "0..1" Arma : equipamento[Arma] >
+Personagem "1" *-- "0..1" Armadura : equipamento[Armadura] >
+
+@enduml
+
