@@ -1,10 +1,13 @@
 # setup_database.py
 
 import sqlite3
+import json
 
+# Nome do arquivo do banco de dados
 DB_FILE = "rpg_database.db"
 
 def create_connection(db_file):
+    """Cria uma conexão com o banco de dados SQLite especificado por db_file."""
     conn = None
     try:
         conn = sqlite3.connect(db_file)
@@ -15,6 +18,7 @@ def create_connection(db_file):
     return conn
 
 def create_table(conn, create_table_sql):
+    """Cria uma tabela usando a instrução SQL fornecida."""
     try:
         c = conn.cursor()
         c.execute(create_table_sql)
@@ -22,8 +26,12 @@ def create_table(conn, create_table_sql):
         print(e)
 
 def main():
+
     conn = create_connection(DB_FILE)
+
     if conn is not None:
+        # --- Criação das Tabelas --- #
+
         # Tabela Item
         sql_create_item_table = """ CREATE TABLE IF NOT EXISTS Item (
                                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,13 +48,13 @@ def main():
                                         item_id INTEGER PRIMARY KEY,
                                         tipo_dano TEXT,
                                         dado_dano TEXT,
-                                        propriedades TEXT,
+                                        propriedades TEXT, -- Armazenado como JSON string
                                         alcance TEXT,
                                         FOREIGN KEY (item_id) REFERENCES Item (id) ON DELETE CASCADE
                                     ); """
         create_table(conn, sql_create_arma_table)
 
-        # Tabela Armadura (com bonus_pv)
+        # Tabela Armadura (MODIFICADA)
         sql_create_armadura_table = """ CREATE TABLE IF NOT EXISTS Armadura (
                                             item_id INTEGER PRIMARY KEY,
                                             tipo_armadura TEXT,
@@ -55,7 +63,7 @@ def main():
                                             max_bonus_destreza INTEGER,
                                             penalidade_furtividade BOOLEAN,
                                             requisito_forca INTEGER,
-                                            bonus_pv INTEGER DEFAULT 0,
+                                            bonus_pv INTEGER DEFAULT 0, -- NOVA COLUNA
                                             FOREIGN KEY (item_id) REFERENCES Item (id) ON DELETE CASCADE
                                         ); """
         create_table(conn, sql_create_armadura_table)
@@ -70,7 +78,7 @@ def main():
                                     ); """
         create_table(conn, sql_create_pocao_table)
 
-        # Tabela Magia (com custo_mana)
+        # Tabela Magia
         sql_create_magia_table = """ CREATE TABLE IF NOT EXISTS Magia (
                                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                                         nome TEXT NOT NULL UNIQUE,
@@ -78,15 +86,14 @@ def main():
                                         escola_magia TEXT,
                                         tempo_conjuracao TEXT,
                                         alcance_magia TEXT,
-                                        componentes TEXT,
+                                        componentes TEXT, 
                                         duracao_magia TEXT,
                                         descricao_efeito TEXT,
-                                        requer_concentracao BOOLEAN,
-                                        custo_mana INTEGER DEFAULT 10
+                                        requer_concentracao BOOLEAN
                                     ); """
         create_table(conn, sql_create_magia_table)
 
-        # Tabela Personagem (com pontos de mana)
+        # Tabela Personagem
         sql_create_personagem_table = """ CREATE TABLE IF NOT EXISTS Personagem (
                                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                                             nome TEXT NOT NULL,
@@ -95,15 +102,13 @@ def main():
                                             nivel INTEGER DEFAULT 1,
                                             pontos_vida_maximos INTEGER,
                                             pontos_vida_atuais INTEGER,
-                                            pontos_mana_maximos INTEGER DEFAULT 0,
-                                            pontos_mana_atuais INTEGER DEFAULT 0,
                                             atributos TEXT,
                                             proficiencias TEXT,
                                             tipo_personagem TEXT NOT NULL CHECK(tipo_personagem IN ('Jogador', 'NPC'))
                                         ); """
         create_table(conn, sql_create_personagem_table)
 
-        # Outras tabelas (Jogador, NPC, Inventario, etc.)
+        # Outras tabelas...
         create_table(conn, "CREATE TABLE IF NOT EXISTS Jogador (personagem_id INTEGER PRIMARY KEY, experiencia INTEGER DEFAULT 0, alinhamento TEXT, nome_jogador TEXT, FOREIGN KEY (personagem_id) REFERENCES Personagem (id) ON DELETE CASCADE);")
         create_table(conn, "CREATE TABLE IF NOT EXISTS NPC (personagem_id INTEGER PRIMARY KEY, tipo_npc TEXT, comportamento TEXT, dialogo TEXT, FOREIGN KEY (personagem_id) REFERENCES Personagem (id) ON DELETE CASCADE);")
         create_table(conn, "CREATE TABLE IF NOT EXISTS Inventario (personagem_id INTEGER NOT NULL, item_id INTEGER NOT NULL, quantidade INTEGER DEFAULT 1, FOREIGN KEY (personagem_id) REFERENCES Personagem (id) ON DELETE CASCADE, FOREIGN KEY (item_id) REFERENCES Item (id) ON DELETE CASCADE, PRIMARY KEY (personagem_id, item_id));")
