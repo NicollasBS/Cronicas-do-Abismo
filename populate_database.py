@@ -37,8 +37,8 @@ def insert_arma(conn, arma_data):
 
 def insert_armadura(conn, armadura_data):
     """ Insere dados específicos de uma armadura. """
-    sql = ''' INSERT INTO Armadura(item_id, tipo_armadura, bonus_ca_base, requer_destreza_bonus, max_bonus_destreza, penalidade_furtividade, requisito_forca)
-              VALUES(?,?,?,?,?,?,?) '''
+    sql = ''' INSERT OR IGNORE INTO Armadura(item_id, tipo_armadura, bonus_ca_base, requer_destreza_bonus, max_bonus_destreza, penalidade_furtividade, requisito_forca, bonus_pv)
+              VALUES(?,?,?,?,?,?,?,?) ''' # Adicionado um '?'
     cur = conn.cursor()
     cur.execute(sql, armadura_data)
     conn.commit()
@@ -124,13 +124,14 @@ def main():
         arco_curto_id = insert_item(conn, ("Arco Curto", "Um arco leve e rápido.", 1.0, 25, "Arma"))
         insert_arma(conn, (arco_curto_id, "Perfurante", "1d6", ["Duas Mãos", "Munição (distância 80/320)"], "Distância"))
 
-        # Armadura: Corselete de Couro
+        # Armadura: Corselete de Couro com pequeno bônus de vida
         couro_id = insert_item(conn, ("Corselete de Couro", "Peitoral de couro endurecido.", 4.5, 10, "Armadura"))
-        insert_armadura(conn, (couro_id, "Leve", 11, True, None, False, 0))
+        insert_armadura(conn, (couro_id, "Leve", 11, True, None, False, 0, 2)) # Bônus de 2 PV
 
-        # Armadura: Cota de Malha
+        # Armadura: Cota de Malha com bônus de vida maior
         cota_malha_id = insert_item(conn, ("Cota de Malha", "Armadura de anéis metálicos.", 18.0, 50, "Armadura"))
-        insert_armadura(conn, (cota_malha_id, "Pesada", 16, False, None, True, 13))
+        insert_armadura(conn, (cota_malha_id, "Pesada", 16, False, None, True, 13, 5)) # Bônus de 5 PV
+
 
         # Poção: Poção de Cura
         pocao_cura_id = insert_item(conn, ("Poção de Cura", "Líquido vermelho que restaura vida.", 0.2, 50, "Pocao"))

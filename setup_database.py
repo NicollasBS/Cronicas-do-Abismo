@@ -64,6 +64,7 @@ def main():
                                             max_bonus_destreza INTEGER,
                                             penalidade_furtividade BOOLEAN,
                                             requisito_forca INTEGER,
+                                            bonus_pv INTEGER DEFAULT 0, -- NOVA COLUNA
                                             FOREIGN KEY (item_id) REFERENCES Item (id) ON DELETE CASCADE
                                         ); """
         create_table(conn, sql_create_armadura_table)

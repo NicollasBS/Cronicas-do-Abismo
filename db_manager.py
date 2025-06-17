@@ -2,106 +2,90 @@
 
 import sqlite3
 import json
-from rpg_model import Arma
+from rpg_model import Jogador, Arma, Armadura, Magia
 
-# Nome do arquivo do banco de dados
 DB_FILE = "rpg_database.db"
 
 def get_class_template(class_name: str) -> dict | None:
-    """
-    Busca no banco de dados um personagem 'template' da classe especificada
-    para usar como base na criação de um novo personagem.
-    """
     conn = None
     try:
         conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
-        sql = """SELECT pontos_vida_maximos, atributos, proficiencias, raca
-                 FROM Personagem
-                 WHERE lower(classe_personagem) = ? AND tipo_personagem = 'Jogador'
-                 LIMIT 1"""
+        sql = "SELECT * FROM Personagem WHERE lower(classe_personagem) = ? AND tipo_personagem = 'Jogador' LIMIT 1"
         cur.execute(sql, (class_name.lower(),))
         template = cur.fetchone()
-        if template:
-            atributos = json.loads(template[1])
-            proficiencias = json.loads(template[2])
-            return {
-                "pontos_vida_maximos": template[0],
-                "atributos": atributos,
-                "proficiencias": proficiencias,
-                "raca": template[3]
-            }
-        return None
+        return dict(template) if template else None
     except sqlite3.Error as e:
-        print(f"Erro no banco de dados ao buscar template de classe: {e}")
+        print(f"Erro no banco de dados: {e}")
         return None
     finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()
+
+def get_all_armors() -> list[Armadura]:
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        sql = "SELECT * FROM Item i JOIN Armadura a ON i.id = a.item_id WHERE i.tipo_item = 'Armadura'"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        armors = [Armadura(
+            id_entidade=r["id"], nome=r["nome"], descricao=r["descricao"], peso=r["peso"],
+            valor_moedas=r["valor_moedas"], tipo_armadura=r["tipo_armadura"],
+            bonus_ca_base=r["bonus_ca_base"], requer_destreza_bonus=r["requer_destreza_bonus"],
+            max_bonus_destreza=r["max_bonus_destreza"], penalidade_furtividade=r["penalidade_furtividade"],
+            requisito_forca=r["requisito_forca"], bonus_pv=r["bonus_pv"]
+        ) for r in rows]
+        return armors
+    except Exception as e:
+        print(f"Erro ao buscar armaduras: {e}"); return []
+    finally:
+        if conn: conn.close()
+
+def get_all_spells() -> list[Magia]:
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        sql = "SELECT * FROM Magia"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        spells = [Magia(
+            id_entidade=r["id"], nome=r["nome"], nivel_magia=r["nivel_magia"],
+            escola_magia=r["escola_magia"], tempo_conjuracao=r["tempo_conjuracao"],
+            alcance_magia=r["alcance_magia"], componentes=json.loads(r["componentes"]),
+            duracao_magia=r["duracao_magia"], descricao_efeito=r["descricao_efeito"],
+            requer_concentracao=r["requer_concentracao"]
+        ) for r in rows]
+        return spells
+    except Exception as e:
+        print(f"Erro ao buscar magias: {e}"); return []
+    finally:
+        if conn: conn.close()
 
 def get_all_weapons() -> list[Arma]:
     """
-    Busca no banco de dados todas as armas disponíveis e retorna uma lista de objetos Arma.
+    Busca todas as armas disponíveis e retorna uma lista de objetos Arma.
     """
     conn = None
-    weapons = []
     try:
         conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
-        sql = """SELECT
-                    i.id, i.nome, i.descricao, i.peso, i.valor_moedas,
-                    a.tipo_dano, a.dado_dano, a.propriedades, a.alcance
-                 FROM Item i
-                 JOIN Arma a ON i.id = a.item_id
-                 WHERE i.tipo_item = 'Arma'"""
+        sql = "SELECT * FROM Item i JOIN Arma a ON i.id = a.item_id WHERE i.tipo_item = 'Arma'"
         cur.execute(sql)
-        all_rows = cur.fetchall()
-        for row in all_rows:
-            propriedades_list = json.loads(row[7])
-            weapon = Arma(
-                id_entidade=row[0], nome=row[1], descricao=row[2],
-                peso=row[3], valor_moedas=row[4], tipo_dano=row[5],
-                dado_dano=row[6], propriedades=propriedades_list, alcance=row[8]
-            )
-            weapons.append(weapon)
+        rows = cur.fetchall()
+        weapons = [Arma(
+            id_entidade=r["id"], nome=r["nome"], descricao=r["descricao"], peso=r["peso"],
+            valor_moedas=r["valor_moedas"], tipo_dano=r["tipo_dano"],
+            dado_dano=r["dado_dano"], propriedades=json.loads(r["propriedades"]),
+            alcance=r["alcance"]
+        ) for r in rows]
         return weapons
-    except sqlite3.Error as e:
-        print(f"Erro no banco de dados ao buscar armas: {e}")
-        return []
+    except Exception as e:
+        print(f"Erro ao buscar armas: {e}"); return []
     finally:
-        if conn:
-            conn.close()
-
-def get_weapon_by_id(weapon_id: int) -> Arma | None:
-    """
-    Busca uma arma específica pelo seu ID no banco de dados.
-    """
-    if weapon_id is None:
-        return None
-    conn = None
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cur = conn.cursor()
-        sql = """SELECT
-                    i.id, i.nome, i.descricao, i.peso, i.valor_moedas,
-                    a.tipo_dano, a.dado_dano, a.propriedades, a.alcance
-                 FROM Item i
-                 JOIN Arma a ON i.id = a.item_id
-                 WHERE i.id = ?"""
-        cur.execute(sql, (weapon_id,))
-        row = cur.fetchone()
-        if row:
-            propriedades_list = json.loads(row[7])
-            weapon = Arma(
-                id_entidade=row[0], nome=row[1], descricao=row[2],
-                peso=row[3], valor_moedas=row[4], tipo_dano=row[5],
-                dado_dano=row[6], propriedades=propriedades_list, alcance=row[8]
-            )
-            return weapon
-        return None
-    except sqlite3.Error as e:
-        print(f"Erro no banco de dados ao buscar arma pelo ID: {e}")
-        return None
-    finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()

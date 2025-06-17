@@ -75,10 +75,11 @@ class Arma(Item):
         pass
 
 class Armadura(Item):
-    """Representa itens usados para defesa (aumentar CA)."""
+    """Representa itens usados para defesa (aumentar CA e, opcionalmente, PV)."""
     def __init__(self, id_entidade: int, nome: str, descricao: str, peso: float, valor_moedas: int,
                  tipo_armadura: str, bonus_ca_base: int, requer_destreza_bonus: bool,
-                 max_bonus_destreza: Optional[int], penalidade_furtividade: bool, requisito_forca: int):
+                 max_bonus_destreza: Optional[int], penalidade_furtividade: bool, requisito_forca: int,
+                 bonus_pv: int = 0): # NOVO ATRIBUTO
         super().__init__(id_entidade, nome, descricao, peso, valor_moedas)
         self.tipo_armadura = tipo_armadura
         self.bonus_ca_base = bonus_ca_base
@@ -86,11 +87,24 @@ class Armadura(Item):
         self.max_bonus_destreza = max_bonus_destreza
         self.penalidade_furtividade = penalidade_furtividade
         self.requisito_forca = requisito_forca
+        self.bonus_pv = bonus_pv # NOVO ATRIBUTO
 
     def ser_usado(self, usuario: 'Personagem'):
-        """Equipa a armadura no personagem."""
+        """Equipa a armadura e aplica seus bônus."""
         print(f"{usuario.nome} equipa {self.nome}.")
+        
+        # Lógica para desequipar a armadura antiga e remover seus bônus
+        armadura_antiga = usuario.equipamento.get('Armadura')
+        if isinstance(armadura_antiga, Armadura):
+            usuario.pontos_vida_maximos -= armadura_antiga.bonus_pv
+        
         usuario.equipamento['Armadura'] = self
+        
+        # Aplica o bônus de vida da nova armadura
+        usuario.pontos_vida_maximos += self.bonus_pv
+        # Garante que a vida atual não ultrapasse a máxima
+        usuario.pontos_vida_atuais = min(usuario.pontos_vida_atuais, usuario.pontos_vida_maximos)
+        
         usuario.calcular_classe_armadura()
 
 class Pocao(Item):
@@ -219,12 +233,18 @@ class Jogador(Personagem):
     """Representa os personagens controlados pelos usuários."""
     def __init__(self, id_entidade: int, nome: str, raca: str, classe_personagem: str, nivel: int,
                  pontos_vida_maximos: int, atributos: Dict[str, int], proficiencias: List[str],
-                 experiencia: int, alinhamento: str, nome_jogador: str, save_id: int | None = None): # Adicionado save_id
+                 experiencia: int, alinhamento: str, nome_jogador: str):
         super().__init__(id_entidade, nome, raca, classe_personagem, nivel, pontos_vida_maximos, atributos, proficiencias)
         self.experiencia = experiencia
         self.alinhamento = alinhamento
         self.nome_jogador = nome_jogador
-        self.save_id = save_id
+        self.magias: List[Magia] = [] # NOVA LISTA PARA MAGIAS
+
+    def aprender_magia(self, magia: Magia):
+        """Adiciona uma magia à lista de magias conhecidas do jogador."""
+        if magia not in self.magias:
+            self.magias.append(magia)
+            print(f"{self.nome} aprendeu a magia: {magia.nome}!")
 
     def ganhar_experiencia(self, quantidade: int):
         """Adiciona pontos de experiência ao jogador."""
