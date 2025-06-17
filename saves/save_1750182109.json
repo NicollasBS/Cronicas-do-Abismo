@@ -1,6 +1,6 @@
 {
-    "save_id": 1750180955,
-    "nome": "ctfygvhbunijo",
+    "save_id": 1750182109,
+    "nome": "adsasdad",
     "raca": "Alta Elfa",
     "classe_personagem": "Mago",
     "nivel": 1,
@@ -19,9 +19,5 @@
         "História",
         "Adagas",
         "Bordões"
-    ],
-    "equipped_weapon_id": null,
-    "known_spell_ids": [
-        1
     ]
 }
